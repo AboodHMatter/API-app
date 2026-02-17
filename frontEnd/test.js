@@ -1,0 +1,1 @@
+fetch("http://localhost:3000/course").then((rss)=>rss.json()).then((data)=>console.log(data));
