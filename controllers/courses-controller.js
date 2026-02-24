@@ -1,93 +1,156 @@
-// const { validationResult } = require('express-validator');
-// let courses = require("../data/courses.js").courses; 
-
-// const getCourseById = (req, res) => {
-//     const courseId = +req.params.courseId
-//     const course = courses.find(c => c.id === courseId);
-//     res.json(course);
-//     res.status(200);
-//     res.end();
-// }
-
-
-// const deleteCourseById = (req, res) => {
-//         const courseId = +req.params.courseId
-//         courses = courses.filter((course)=> course.id !== courseId);
-//         res.status(200).json({success: true}).end();
-//     }
-
-// const addCourse = (req, res) => {
-//     console.log({id: +courses.length + 1, ...req.body})
-//     const errors = validationResult(req); 
-//     console.log("errors", errors);
-//     if (!errors.isEmpty()){
-//         return res.status(400).json(errors.array()).end()
-//     }
-//     courses.push({id: courses.length + 1, ...req.body});
-//     res.status(201).json(courses);
-//     res.end();
-// }
-
-// const getAllCourses =  (req, res)=>{
-//     res.json(courses);
-//     res.status(200);
-//     res.end();
-// }
-
-// module.exports = {getCourseById, addCourse, deleteCourseById, getAllCourses};
 const { validationResult } = require('express-validator');
-const Course = require("../models/course-model.js");
-const asyncWrapper = require("./asyncWrabber.js");
-const appErorr = require('../utilty/appError.js');
+const courseService = require("../services/course-service.js");
+const asyncWrapper = require("./async-wrapper.js");
+const AppError = require('../utils/app-error.js');
 
-let getAllCourses = asyncWrapper(async (req, res) => {
+/**
+ * @swagger
+ * /course:
+ *   get:
+ *     summary: Get all courses
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of courses to return
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: string
+ *         description: Cursor for pagination (_id)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved courses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 nextCursor:
+ *                   type: string
+ *                   nullable: true
+ *                 hasNextPage:
+ *                   type: boolean
+ */
+
+
+const getAllCourses = asyncWrapper(async (req, res) => {
   const query = req.query;
-  const limit = parseInt(query.limit) || 10;
-  const page = parseInt(query.page) || 1;
-  const skip = (page - 1) * limit;
-  const courses = await Course.find({}, { __v: false }).limit(limit).skip(skip);
-  res.json({ status: "success", data: courses }).status(200).end();
-})
+  const limit = Math.min(parseInt(query.limit) || 10, 50);
+  const cursor = query.cursor || null;
 
-let addCourse = asyncWrapper(async (req, res, next) => {
+  const result = await courseService.getAllCourses(cursor, limit);
+
+  res.status(200).json({
+    status: "success",
+    data: result.data,
+    nextCursor: result.nextCursor,
+    hasNextPage: result.hasNextPage
+  });
+});
+
+/**
+ * @swagger
+ * /course:
+ *   post:
+ *     summary: Create a new course
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - price
+ *             properties:
+ *               title:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Course successfully created
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ */
+const addCourse = asyncWrapper(async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    const erorr = appErorr.create(errors.array(), 400, "fail");
-    return next(erorr);
+    const error = new AppError(errors.array().map(err => err.msg).join(", "), 400, "fail");
+    return next(error);
   }
-  // console.log({id: courses.length + 1, ...req.body})
-  const newCourse = new Course(req.body);
-  await newCourse.save();
-  res.status(201).json({ status: "success", data: newCourse }).end();
-})
+  const newCourse = await courseService.createCourse({ ...req.body, createdBy: req.currentUser.id });
+  res.status(201).json({ status: "success", data: newCourse });
+});
 
-let getCourseById = asyncWrapper(async (req, res, next) => {
-  // try {
+/**
+ * @swagger
+ * /course/{courseId}:
+ *   get:
+ *     summary: Get a course by ID
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the course
+ *     responses:
+ *       200:
+ *         description: Course retrieved successfully
+ *       404:
+ *         description: Course not found
+ */
+const getCourseById = asyncWrapper(async (req, res, next) => {
+  const course = await courseService.getCourseById(req.params.courseId);
+  return res.status(200).json({ status: "success", data: course });
+});
 
-  const course = await Course.findById(req.params.courseId);
-  if (!course) {
-    const erorr = appErorr.create("Course not found", 404, "errrrrr");
-    return next(erorr);
-
-    // const erorr = new Error();
-    //   erorr.statusCode = 404;
-    //   erorr.message = "Course not found";
-    // return res.status(404).json({status: "fail", data: {course: "Course not found" }}).end();
-  }
-  return res.json({ status: "success", data: course }).status(200).end();
-}
-  //  catch (error) {
-  //   res.status(400).json({status: "error", data: null, message: error.message, Code: 400 }).end();
-  // }
-  // }
-)
-let deleteCourseById = async (req, res) => {
-  await Course.deleteOne({ _id: req.params.courseId });
-
-
-  res.status(200).json({ status: "success", data: null }).end();
-
-}
-
+/**
+ * @swagger
+ * /course/{courseId}:
+ *   delete:
+ *     summary: Delete a course
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the course
+ *     responses:
+ *       200:
+ *         description: Course deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Not an admin)
+ *       404:
+ *         description: Course not found
+ */
+const deleteCourseById = asyncWrapper(async (req, res, next) => {
+  await courseService.deleteCourseById(req.params.courseId);
+  res.status(200).json({ status: "success", data: null });
+});
 
 module.exports = { getAllCourses, getCourseById, addCourse, deleteCourseById };

@@ -4,25 +4,44 @@
   "description": "",
   "main": "1.js",
   "scripts": {
-    "run:dev": "nodemon 4(project).js"
+    "run:dev": "nodemon server.js",
+    "test": "jest --runInBand --detectOpenHandles",
+    "test:coverage": "jest --coverage --runInBand --detectOpenHandles"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.1693.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
+    "bucket": "^0.0.1",
+    "cloudinary": "^2.9.0",
+    "cookie-parser": "^1.4.7",
     "cora": "^0.1.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
     "mongoose": "^9.1.6",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
+    "multer-s3": "^3.0.1",
     "nodemon": "^3.1.11",
+    "ratelimit": "^0.0.4",
+    "response-formatter": "^1.1.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "total": "^0.2.3",
     "validator": "^13.15.26"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "mongodb-memory-server": "^11.0.1",
+    "supertest": "^7.2.2"
   }
 }

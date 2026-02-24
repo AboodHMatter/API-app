@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const { userRoles } = require("../utilty/user-roles.js");
+const { userRoles } = require("../utils/user-roles.js");
 
 const userSchema = new mongoose.Schema({
     firstName: {
@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     lastName: {
         type: String,
         required: [true, "Last name is required"]
+
     },
     email: {
         type: String,
@@ -19,20 +20,32 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "Password is required"]
-    },
-    token: {
-        type: String,
+        required: [true, "Password is required"],
+        select: false
     },
     role: {
         type: String,
         enum: [userRoles.USER, userRoles.ADMIN, userRoles.MANAGER],
         default: userRoles.USER
+
     },
-    avatar: {
+    avatarUrl: {
         type: String,
-        default: "./uploads/491949468_122227264226231140_6737147760321036211_n.jpg"
-    }    
-})
+        default: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+    },
+    avatarPublicId: {
+        type: String,
+    },
+    refreshTokens: [String]
+}, { timestamps: true });
+
+userSchema.index({ _id: -1, createdAt: -1 });
+
+userSchema.set("toJSON", {
+    transform: function (doc, ret) {
+        delete ret.password;
+        return ret;
+    }
+});
 
 module.exports = mongoose.model("User", userSchema);
