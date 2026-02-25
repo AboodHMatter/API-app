@@ -59,7 +59,7 @@ const loginUser = async (email, password) => {
     }
 
     const user = await userRepository.findByEmailWithPassword(email);
-    if (!user) {
+    if (!user || !user.password) {
         throw new AppError('Invalid email or password', 401, 'fail');
     }
 
