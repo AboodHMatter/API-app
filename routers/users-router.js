@@ -6,22 +6,22 @@ const { firstNameValidation, lastNameValidation, emailValidation, passwordValida
 const AppError = require("../utils/app-error.js");
 const upload = require("../middleware/upload.js");
 
-router.route("/users")
+router.route("/")
   .get(verifyToken, usersController.getAllUsers);
 
-router.route("/users/register")
+router.route("/register")
   .post(upload.single("avatar"), firstNameValidation(), lastNameValidation(), emailValidation(), passwordValidation(), usersController.register);
 
-router.route("/users/login")
+router.route("/login")
   .post(emailValidation(), passwordValidation(), usersController.login);
 
-router.route("/users/refresh-token")
+router.route("/refresh-token")
   .post(usersController.refreshToken);
 
-router.route("/users/logout")
+router.route("/logout")
   .post(usersController.logout);
 
-router.route("/users/avatar")
+router.route("/avatar")
   .patch(verifyToken, upload.single("avatar"), usersController.updateAvatar);
 
 module.exports = router;

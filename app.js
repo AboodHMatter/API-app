@@ -20,7 +20,7 @@ const limiter = rateLimit({
     max: 100,
     message: "Too many requests from this IP, please try again after 15 minutes",
 });
-app.use("/", limiter);
+app.use("/api/v1", limiter);
 
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
@@ -29,8 +29,8 @@ if (process.env.NODE_ENV !== 'test') {
 const coursesRouter = require("./routers/courses-router.js");
 const usersRouter = require("./routers/users-router.js");
 
-app.use("/", coursesRouter);
-app.use("/", usersRouter);
+app.use("/api/v1/courses", coursesRouter);
+app.use("/api/v1/users", usersRouter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.all(/(.*)/, (req, res) => {
