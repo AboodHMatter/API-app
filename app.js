@@ -34,11 +34,9 @@ const usersRouter = require("./routers/users-router.js");
 app.use("/api/v1/courses", coursesRouter);
 app.use("/api/v1/users", usersRouter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/ping", (req, res) => {
-    res.json({ message: "pong" });
-});
 
-app.all("*", (req, res) => {
+
+app.all(/(.*)/, (req, res) => {
     res.status(404).json({ status: "fail", message: "Route not found" });
 });
 
